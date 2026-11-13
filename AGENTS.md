@@ -4,7 +4,7 @@ This is the **repository-level operating contract** for agents contributing to `
 
 ## Mission and current state
 
-Build a reproducible, contributor-friendly research pipeline for **matching decompilation** of _World in Conflict_ (2007), starting with compiler fingerprinting and a small x86 function-matching pilot. **No functioning compiler oracle, automatic work-leasing API, verified matching-source corpus, or native recompiled game exists here yet.** Do not report these as complete.
+Build a reproducible, contributor-friendly research pipeline for **matching decompilation** of _World in Conflict_ (2007), starting with compiler fingerprinting and a small x86 function-matching pilot. The offline x86 verifier supports local matching experiments. The exact compiler, stock-executable matching milestone, automatic leasing, and native recompilation remain open.
 
 Read in order: `README.md`, `CONTRIBUTING.md`, `docs/TOOLCHAIN.md`, `docs/ARCHITECTURE.md`, and `docs/PROTOCOL.md`. Check for newer repository guidance before work.
 
@@ -21,10 +21,18 @@ Read in order: `README.md`, `CONTRIBUTING.md`, `docs/TOOLCHAIN.md`, `docs/ARCHIT
 ## Task selection and claims
 
 - Only pick an existing, scoped GitHub Issue or an explicit task from the owner. In the bootstrap phase, GitHub Issues/PRs are the **actual** coordination mechanism; no API, database or MCP service is live.
-- Before beginning, read recent comments on the Issue and `docs/PROTOCOL.md`. Ask for/obtain an acknowledged claim so agents do not duplicate each other. If the claim expires, request renewal; do not unilaterally assume exclusivity.
+- Before beginning an Issue batch, read its recent comments and `docs/PROTOCOL.md`. If a claim expires, request renewal before assuming exclusivity.
 - Prefer the smallest independent task that improves the compiler oracle, fixtures, validation tooling, or contributor experience. Make it reproducible offline.
 - For tasks involving an original binary, first verify its locally computed SHA-256 and PE32/x86 identity. Do not silently switch builds or treat a different checksum as equivalent.
 - Never copy private outputs from an unrelated local project into this public repo without authorization and rights review.
+
+## Continuous work
+
+- Use a GitHub Issue to track each batch, its owner, and aggregate checkpoints. A maintainer-assigned batch can start immediately. For unassigned work, request the existing maintainer acknowledgment once per batch.
+- Keep the private ledger as the authoritative record for function claims within a batch, attempts, retries, byte counts, and verification evidence. Resume from that ledger. Post aggregate checkpoints on the Issue without duplicating per-function records.
+- Start each independent public tooling or documentation change on a short-lived branch from current `origin/main`. Commit and push focused changes as you go, open one PR per change, and squash-merge into `main` after CI and any required review pass. Use PRs for public changes to `main`.
+- Keep working through the batch while unrelated PRs are in review. Use a separate checkout if switching branches would disrupt an active run. Start dependent changes from the merged base when it becomes available.
+- Use Issues for private research checkpoints. A function match by itself does not require a public commit or PR.
 
 ## Engineering approach
 

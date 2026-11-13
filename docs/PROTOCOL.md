@@ -5,10 +5,10 @@
 ## Phase 0: GitHub-first workflow (operational after publication)
 
 1. Contributor (human or AI) selects an open Issue marked with a scoped task.
-2. Contributor comments requesting the claim, including a proposed test plan.
+2. Contributor requests the batch claim with a test plan. A maintainer assignment is sufficient to start.
 3. Maintainer acknowledges the claimant and start time. Acknowledged claims last **48 hours** by default; the maintainer may renew or reassign when work stalls.
-4. Contributor sends progress in the Issue without attaching proprietary artifacts or sensitive logs.
-5. Contributor opens a PR with original tooling/docs and reproducible tests; the maintainer reviews and closes the Issue. For compiler experiments, publish only metadata, methodology and permitted attestations, not original bytes or reconstructed game source.
+4. The private ledger holds per-function attempts, retries, and verification evidence. The contributor posts aggregate checkpoints in the Issue and resumes work from the ledger.
+5. Public changes use a short-lived branch and one focused PR. Squash-merge after CI and any required review pass. Independent batches continue while PRs are in review. Publish only approved aggregate metadata or methodology from private research.
 6. Negative results and compiler mismatches are useful outcomes; document them rather than hiding them.
 
 Until a coordinator exists, claims are **socially coordinated**, not enforced programmatically. Two comments are not a transactional lease. Maintainers resolve conflicts and may split tasks.

@@ -6,9 +6,9 @@ Welcome. The project is bootstrapping a distributed research workflow; contribut
 
 1. Read `README.md`, `AGENTS.md` (if using an agent), `docs/TOOLCHAIN.md`, and `docs/PROTOCOL.md`.
 2. Browse open Issues; look for compiler identification, synthetic fixture, test, documentation, or coordinator design work.
-3. Comment on the Issue to request a **maintainer-acknowledged claim** before starting. Claims default to 48 hours, are renewable, and are not enforced automatically yet.
-4. Fork/create a topic branch, implement a minimal change, and run `npm test`.
-5. Open a pull request referencing the Issue, with commands/results, reproducibility notes, evidence and limitations.
+3. Request a **maintainer-acknowledged batch claim** before starting unassigned work. Maintainer-assigned batches can start immediately. Claims default to 48 hours and are renewable.
+4. For public changes, branch from current `main`, commit focused changes, and run `npm test`.
+5. Open a focused PR linked to the Issue. Include commands, results, and limitations. Squash-merge after CI and any required review pass. For private matching work, keep per-function results in the private ledger and post aggregate checkpoints on the Issue.
 
 ## What is welcome now
 
