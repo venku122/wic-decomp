@@ -45,6 +45,8 @@ The inspection script reads the file **without executing or modifying it**, prin
 
 No game installation? You can still work on the TypeScript/Node coordination design, original test fixtures, compiler-identification research, CI, and contributor documentation.
 
+The offline [x86 function verifier](docs/VERIFIER.md) compiles a local C++ candidate and compares a scoped PE function against the resulting COFF object.
+
 ## Roadmap
 
 | Stage | Outcome | Current status |

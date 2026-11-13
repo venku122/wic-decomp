@@ -22,9 +22,9 @@ An August 2026 engineering report from the separate renderer modernization effor
 ## Proposed components
 
 1. **Fingerprint CLI (exists):** read-only PE metadata and SHA-256; no binary execution.
-2. **Compiler oracle (not yet built):** controlled MSVC experiments, deterministic compile commands, documented exact-byte match rules.
+2. **Compiler oracle (local bootstrap):** the x86 verifier compiles standalone candidates and records exact comparison rules and toolchain identity. The original compiler and flags remain unproven.
 3. **Function inventory (not yet public):** stable function IDs scoped to a specific build; avoid dumping original bytes in public context packets.
-4. **Local match verifier (not yet built):** compare separately produced bytes with locally available original bytes and record a compact, non-sensitive attestation.
+4. **Local match verifier (exists):** compare a scoped PE function to a COFF function and emit a compact comparison record. See [Local x86 verifier](VERIFIER.md).
 5. **Coordinator (not yet built):** TypeScript HTTP/MCP adapters, GitHub account identity, task leasing, retry/backoff, reports, moderation.
 6. **Postgres backing store (planned):** function identities, lease generations, expirations, submissions, independent verification and credits. GitHub remains the collaboration entry point, not a high-frequency queue.
 7. **Isolated verifier (planned):** do not run untrusted submissions with game binaries or credentials on a persistent self-hosted runner. Prefer ephemeral, restricted jobs and minimize input exposure.
