@@ -1,0 +1,14 @@
+{
+  "name": "wic-decomp-bootstrap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Original tooling for World in Conflict distributed decompilation research (no game content)",
+  "type": "module",
+  "scripts": {
+    "inspect": "node scripts/inspect-pe.mjs",
+    "test": "node --test scripts/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

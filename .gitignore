@@ -1,0 +1,44 @@
+# Local proprietary inputs and analyses: NEVER COMMIT
+original/
+private/
+game/
+game-files/
+compiler/
+compilers/
+toolchains/
+analysis/private/
+analysis/local/
+reverse-engineering/private/
+
+# Windows binaries and output (use synthetic fixtures as text)
+*.exe
+*.dll
+*.sys
+*.pdb
+*.lib
+*.obj
+*.o
+*.iso
+*.img
+*.dmp
+*.mdmp
+*.gpr
+*.rep
+*.gdt
+*.sqlite
+*.db
+*.bin
+*.pak
+*.dat
+
+# Node/build/env
+node_modules/
+dist/
+build/
+out/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
