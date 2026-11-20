@@ -42,6 +42,8 @@ Collect SHA-256, PE architecture/format, COFF timestamp, PE linker-version field
 
 ## Acceptance gates
 
+`bindObjectAbsoluteOperand` in `scripts/x86-function-code.mjs` prepares a new x86 COFF object with a named DIR32 relocation at a caller-specified offset. Supply the original address and establish the instruction boundary before using it. The helper checks the address, preserves the input object, and rejects overlapping relocations. A later comparison still requires the target relocation and an explicit symbol binding.
+
 - **Compiler-family hypothesis:** multiple clues, not a match.
 - **Locally matched:** full justified byte comparison for a function, with only documented relocation-address treatment. Masks must not erase meaningful instructions.
 - **Independently verified:** a separate trusted run recreates the same function result with the same target hash and accepted rules.

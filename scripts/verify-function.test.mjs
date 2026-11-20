@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { compareFunction } from './verify-function.mjs';
+import { bindObjectAbsoluteOperand, readObjectFunction } from './x86-function-code.mjs';
 
 function fixture({ targetRelocation = 0, objectRelocation = 0, change = false } = {}) {
   const target = Buffer.alloc(0x600);
@@ -93,6 +94,41 @@ function fixture({ targetRelocation = 0, objectRelocation = 0, change = false } 
 function compare({ target, object, spec }) {
   return compareFunction(target, object, spec);
 }
+
+test('binds a checked absolute operand to an existing COFF external', () => {
+  const input = fixture({ targetRelocation: 3 });
+  const original = Buffer.from(input.object);
+  const rule = { offset: 1, expectedAddress: 0x401080, externalSymbol: '_global' };
+  const bound = bindObjectAbsoluteOperand(input.object, input.spec.symbol, rule);
+  assert.deepEqual(input.object, original);
+  const actual = readObjectFunction(bound, input.spec.symbol);
+  assert.deepEqual(actual.bytes, Buffer.from([0xb8, 0, 0, 0, 0, 0xc3]));
+  assert.deepEqual(actual.relocations, [{ offset: 1, type: 6, name: '_global' }]);
+  assert.equal(compare({ ...input, object: bound }).status, 'locally_matched');
+});
+
+test('binds a new long external without changing the verifier contract', () => {
+  const input = fixture({ targetRelocation: 3 });
+  const rule = { offset: 1, expectedAddress: 0x401080, externalSymbol: '_synthetic_external_slot' };
+  const bound = bindObjectAbsoluteOperand(input.object, input.spec.symbol, rule);
+  assert.deepEqual(readObjectFunction(bound, input.spec.symbol).relocations,
+    [{ offset: 1, type: 6, name: rule.externalSymbol }]);
+  assert.equal(compare({ ...input, object: bound }).status, 'unverifiable');
+  input.spec.absoluteSymbols = { [rule.externalSymbol]: 0x1080 };
+  assert.equal(compare({ ...input, object: bound }).status, 'locally_matched');
+});
+
+test('rejects mismatched, out-of-scope and already relocated operands', () => {
+  const input = fixture({ targetRelocation: 3 });
+  const rule = { offset: 1, expectedAddress: 0x401080, externalSymbol: '_global' };
+  assert.throws(() => bindObjectAbsoluteOperand(input.object, input.spec.symbol,
+    { ...rule, expectedAddress: 0x401081 }), { reason: 'coff_operand_value' });
+  assert.throws(() => bindObjectAbsoluteOperand(input.object, input.spec.symbol,
+    { ...rule, offset: 3 }), { reason: 'coff_operand_bounds' });
+  const bound = bindObjectAbsoluteOperand(input.object, input.spec.symbol, rule);
+  assert.throws(() => bindObjectAbsoluteOperand(bound, input.spec.symbol,
+    { ...rule, expectedAddress: 0 }), { reason: 'overlapping_coff_relocation' });
+});
 
 test('compares a full synthetic function exactly and reports no private data', () => {
   const result = compare(fixture());
