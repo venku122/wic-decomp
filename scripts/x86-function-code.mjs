@@ -98,7 +98,7 @@ export function readTargetFunction(image, spec) {
   return { bytes, imageBase, relocations, containsRva };
 }
 
-export function readObjectFunction(object, symbol) {
+function readObjectScope(object, symbol) {
   slice(object, 0, 20, 'invalid_coff');
   requireEvidence(object.readUInt16LE(0) === X86 && object.readUInt16LE(16) === 0, 'unsupported_coff');
   const count = object.readUInt16LE(2);
@@ -128,6 +128,7 @@ export function readObjectFunction(object, symbol) {
     const auxiliary = table[row + 17];
     requireEvidence(index + auxiliary < symbolCount, 'invalid_coff_symbols');
     symbols.set(index, {
+      index,
       name: nameAt(row),
       value: table.readUInt32LE(row + 8),
       section: table.readInt16LE(row + 12),
@@ -184,5 +185,75 @@ export function readObjectFunction(object, symbol) {
   relocations.sort((a, b) => a.offset - b.offset);
   requireEvidence(relocations.every(({ offset }, index) =>
     index === 0 || offset >= relocations[index - 1].offset + 4), 'overlapping_coff_relocations');
+  return { bytes, relocations, count, headers, header, rawOffset, relocationOffset, relocationCount,
+    tableOffset, symbolCount, symbols, table, strings, stringsOffset, definition };
+}
+
+export function readObjectFunction(object, symbol) {
+  const { bytes, relocations } = readObjectScope(object, symbol);
   return { bytes, relocations };
+}
+
+/**
+ * Return a new x86 COFF object with one caller-identified DIR32 operand.
+ * The caller must establish the instruction boundary and expected address.
+ */
+export function bindObjectAbsoluteOperand(object, symbol, { offset, expectedAddress, externalSymbol }) {
+  const scope = readObjectScope(object, symbol);
+  requireEvidence(Number.isSafeInteger(offset) && offset >= 0 && offset + 4 <= scope.bytes.length,
+    'coff_operand_bounds');
+  requireEvidence(Number.isSafeInteger(expectedAddress) && expectedAddress >= 0 &&
+    expectedAddress <= 0xffffffff && scope.bytes.readUInt32LE(offset) === expectedAddress,
+  'coff_operand_value');
+  requireEvidence(!scope.relocations.some(row => row.offset < offset + 4 && row.offset + 4 > offset),
+    'overlapping_coff_relocation');
+  requireEvidence(typeof externalSymbol === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(externalSymbol),
+    'invalid_coff_binding_name');
+  const matches = [...scope.symbols.values()].filter(row => row.name === externalSymbol);
+  requireEvidence(matches.length === 0 || (matches.length === 1 && matches[0].storage === 2 &&
+    matches[0].section === 0 && matches[0].value === 0), 'unsupported_coff_reference');
+
+  // All bytes after the old symbol table must belong to its string table.
+  // Keep every original symbol index and leave other sections at their old file offsets.
+  requireEvidence(scope.relocationCount < 0xfffe && scope.stringsOffset + scope.strings.length === object.length,
+    'unsupported_coff_layout');
+  for (let index = 0; index < scope.count; index++) {
+    const header = index * 40;
+    const raw = scope.headers.readUInt32LE(header + 20);
+    const size = scope.headers.readUInt32LE(header + 16);
+    const reloc = scope.headers.readUInt32LE(header + 24);
+    const count = scope.headers.readUInt16LE(header + 32);
+    requireEvidence((raw === 0 || raw + size <= scope.tableOffset) &&
+      (count === 0 || reloc + count * 10 <= scope.tableOffset) &&
+      (scope.headers.readUInt32LE(header + 36) & 0x01000000) === 0 &&
+      scope.headers.readUInt32LE(header + 28) === 0 && scope.headers.readUInt16LE(header + 34) === 0,
+    'unsupported_coff_layout');
+  }
+
+  const relocations = Array.from({ length: scope.relocationCount }, (_, index) =>
+    object.subarray(scope.relocationOffset + index * 10, scope.relocationOffset + index * 10 + 10));
+  const binding = Buffer.alloc(10);
+  binding.writeUInt32LE(offset, 0);
+  binding.writeUInt32LE(matches[0]?.index ?? scope.symbolCount, 4);
+  binding.writeUInt16LE(0x06, 8);
+  relocations.push(binding);
+  relocations.sort((a, b) => a.readUInt32LE(0) - b.readUInt32LE(0));
+
+  const prefix = Buffer.from(object.subarray(0, scope.tableOffset));
+  const symbols = Buffer.from(scope.table);
+  const section = 20 + scope.header;
+  prefix.writeUInt32LE(0, scope.rawOffset + offset);
+  prefix.writeUInt32LE(scope.tableOffset, section + 24);
+  prefix.writeUInt16LE(relocations.length, section + 32);
+  prefix.writeUInt32LE(scope.tableOffset + relocations.length * 10, 8);
+  symbols.writeUInt16LE(relocations.length, scope.definition.index * 18 + 22);
+  if (matches.length) return Buffer.concat([prefix, ...relocations, symbols, scope.strings]);
+
+  const external = Buffer.alloc(18);
+  external.writeUInt32LE(scope.strings.length, 4);
+  external[16] = 2;
+  const strings = Buffer.concat([scope.strings, Buffer.from(externalSymbol + '\0', 'ascii')]);
+  strings.writeUInt32LE(strings.length, 0);
+  prefix.writeUInt32LE(scope.symbolCount + 1, 12);
+  return Buffer.concat([prefix, ...relocations, symbols, external, strings]);
 }
